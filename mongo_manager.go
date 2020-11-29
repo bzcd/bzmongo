@@ -2,16 +2,14 @@ package bzmongo
 
 import (
 	"context"
+	"errors"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type (
-	MapStringOptions map[string]*Options
-	mapStringMongo   map[string]*Mongo
-)
+type MapStringOptions map[string]*Options
 
-var mm = mapStringMongo{}
+var mgr = map[string]*Mongo{}
 
 func Init(mo MapStringOptions) {
 	for key, opt := range mo {
@@ -20,7 +18,7 @@ func Init(mo MapStringOptions) {
 			continue
 		}
 
-		mm[key] = cli
+		mgr[key] = cli
 	}
 }
 
@@ -31,23 +29,33 @@ func InitAndConnect(ctx context.Context, mo MapStringOptions) {
 			continue
 		}
 
-		mm[key] = cli
+		mgr[key] = cli
 	}
 }
 
-func GetMongo(name string) *Mongo {
-	m, ok := mm[name]
+func GetMongo(name string) (*Mongo, error) {
+	m, ok := mgr[name]
 	if !ok {
-		panic("No mongo named: " + name)
+		return nil, errors.New("No mongo named: " + name)
 	}
 
-	return m
+	return m, nil
 }
 
 func GetDatabase(name, db string) *mongo.Database {
-	return GetMongo(name).Database(db)
+	m, _ := GetMongo(name)
+	if m == nil {
+		return nil
+	}
+
+	return m.Database(db)
 }
 
 func GetCollection(name, db, coll string) *Collection {
-	return GetMongo(name).Collection(db, coll)
+	m, _ := GetMongo(name)
+	if m == nil {
+		return nil
+	}
+
+	return m.Collection(db, coll)
 }
