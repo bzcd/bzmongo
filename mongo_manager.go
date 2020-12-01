@@ -22,15 +22,17 @@ func Init(mo MapStringOptions) {
 	}
 }
 
-func InitAndConnect(ctx context.Context, mo MapStringOptions) {
+func InitAndConnect(ctx context.Context, mo MapStringOptions) error {
 	for key, opt := range mo {
 		cli, err := Connect(ctx, opt)
 		if err != nil {
-			continue
+			return err
 		}
 
 		mgr[key] = cli
 	}
+
+	return nil
 }
 
 func GetMongo(name string) (*Mongo, error) {
