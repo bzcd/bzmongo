@@ -13,7 +13,8 @@ type Collection struct {
 
 // Get one by id
 func (c *Collection) Get(ctx context.Context, out interface{}, filter interface{}) (interface{}, error) {
-	err := c.Collection.FindOne(ctx, filter).Decode(out)
+	coll, _ := c.Collection.Clone()
+	err := coll.FindOne(ctx, filter).Decode(out)
 	if err == mongo.ErrNoDocuments {
 		return nil, nil
 	}
@@ -27,7 +28,8 @@ func (c *Collection) Get(ctx context.Context, out interface{}, filter interface{
 
 // Gets more by filter
 func (c *Collection) Gets(ctx context.Context, out interface{}, filter interface{}) error {
-	cur, err := c.Collection.Find(ctx, filter)
+	coll, _ := c.Collection.Clone()
+	cur, err := coll.Find(ctx, filter)
 	if err != nil {
 		return err
 	}
@@ -37,20 +39,24 @@ func (c *Collection) Gets(ctx context.Context, out interface{}, filter interface
 
 // Insert document
 func (c *Collection) Insert(ctx context.Context, document interface{}) error {
-	_, err := c.Collection.InsertOne(ctx, document)
+	coll, _ := c.Collection.Clone()
+	_, err := coll.InsertOne(ctx, document)
 	return err
 }
 
 // Update one
 func (c *Collection) Update(ctx context.Context, filter interface{}, update interface{}) error {
-	_, err := c.Collection.UpdateOne(ctx, filter, update)
+	coll, _ := c.Collection.Clone()
+	_, err := coll.UpdateOne(ctx, filter, update)
 	return err
 }
 
 func (c *Collection) InsertOrUpdate(ctx context.Context, filter interface{}, update interface{}) {
-	c.Collection.FindOneAndUpdate(ctx, filter, update, options.FindOneAndUpdate().SetUpsert(true))
+	coll, _ := c.Collection.Clone()
+	coll.FindOneAndUpdate(ctx, filter, update, options.FindOneAndUpdate().SetUpsert(true))
 }
 
 func (c *Collection) Count(ctx context.Context, filter interface{}) (int64, error) {
-	return c.Collection.CountDocuments(ctx, filter)
+	coll, _ := c.Collection.Clone()
+	return coll.CountDocuments(ctx, filter)
 }
