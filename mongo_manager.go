@@ -11,15 +11,18 @@ type MapStringOptions map[string]*Options
 
 var mgr = map[string]*Mongo{}
 
-func Init(mo MapStringOptions) {
+func Init(mo MapStringOptions) (err error) {
 	for key, opt := range mo {
-		cli, err := New(opt)
-		if err != nil {
+		cli, e := New(opt)
+		if e != nil {
+			err = e
 			continue
 		}
 
 		mgr[key] = cli
 	}
+
+	return nil
 }
 
 func InitAndConnect(ctx context.Context, mo MapStringOptions) error {
