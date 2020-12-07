@@ -50,3 +50,7 @@ func (c *Collection) Update(ctx context.Context, filter interface{}, update inte
 func (c *Collection) InsertOrUpdate(ctx context.Context, filter interface{}, update interface{}) {
 	c.Collection.FindOneAndUpdate(ctx, filter, update, options.FindOneAndUpdate().SetUpsert(true))
 }
+
+func (c *Collection) Count(ctx context.Context, filter interface{}) (int64, error) {
+	return c.Collection.CountDocuments(ctx, filter)
+}
