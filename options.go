@@ -23,12 +23,17 @@ type Options struct {
 }
 
 func (o *Options) ClientOptions() *options.ClientOptions {
-	return options.Client().ApplyURI(o.URI).
+	opt := options.Client().ApplyURI(o.URI).
 		SetLocalThreshold(o.LocalThreshold).
 		SetMaxConnIdleTime(o.MaxConnIdleTime).
 		SetMaxPoolSize(o.MaxPoolSize).
 		SetConnectTimeout(o.ConnectTimeout).
-		SetHeartbeatInterval(o.HeartbeatInterval).
 		SetServerSelectionTimeout(o.ServerSelectionTimeout).
 		SetSocketTimeout(o.SocketTimeout)
+
+	if o.HeartbeatInterval > 0 {
+		opt.SetHeartbeatInterval(o.HeartbeatInterval)
+	}
+
+	return opt
 }
