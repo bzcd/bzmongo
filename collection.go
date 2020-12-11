@@ -56,6 +56,15 @@ func (c *Collection) InsertOrUpdate(ctx context.Context, filter interface{}, upd
 	coll.FindOneAndUpdate(ctx, filter, update, options.FindOneAndUpdate().SetUpsert(true))
 }
 
+func (c *Collection) InsertOrUpdate2(ctx context.Context, out interface{}, filter interface{}, update interface{}) (interface{}, error) {
+	coll, _ := c.Collection.Clone()
+	err := coll.FindOneAndUpdate(ctx, filter, update, options.FindOneAndUpdate().SetUpsert(true)).Decode(out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *Collection) Count(ctx context.Context, filter interface{}) (int64, error) {
 	coll, _ := c.Collection.Clone()
 	return coll.CountDocuments(ctx, filter)
