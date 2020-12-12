@@ -58,6 +58,13 @@ func (c *Collection) Update(ctx context.Context, filter interface{}, update inte
 	return err
 }
 
+// UpdateMany one
+func (c *Collection) UpdateMany(ctx context.Context, filter interface{}, update interface{}, opts ...*options.UpdateOptions) error {
+	coll, _ := c.Collection.Clone()
+	_, err := coll.UpdateMany(ctx, filter, update, opts...)
+	return err
+}
+
 func (c *Collection) InsertOrUpdate(ctx context.Context, filter interface{}, update interface{}, opts ...*options.FindOneAndUpdateOptions) {
 	coll, _ := c.Collection.Clone()
 	opts = append(opts, options.FindOneAndUpdate().SetUpsert(true))
