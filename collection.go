@@ -12,9 +12,9 @@ type Collection struct {
 }
 
 // Get one by id
-func (c *Collection) Get(ctx context.Context, out interface{}, filter interface{}) (interface{}, error) {
+func (c *Collection) Get(ctx context.Context, out interface{}, filter interface{}, opts ...*options.FindOneOptions) (interface{}, error) {
 	coll, _ := c.Collection.Clone()
-	err := coll.FindOne(ctx, filter).Decode(out)
+	err := coll.FindOne(ctx, filter, opts...).Decode(out)
 	if err == mongo.ErrNoDocuments {
 		return nil, nil
 	}
@@ -27,9 +27,9 @@ func (c *Collection) Get(ctx context.Context, out interface{}, filter interface{
 }
 
 // Gets more by filter
-func (c *Collection) Gets(ctx context.Context, out interface{}, filter interface{}) error {
+func (c *Collection) Gets(ctx context.Context, out interface{}, filter interface{}, opts ...*options.FindOptions) error {
 	coll, _ := c.Collection.Clone()
-	cur, err := coll.Find(ctx, filter)
+	cur, err := coll.Find(ctx, filter, opts...)
 	if err != nil {
 		return err
 	}
@@ -38,34 +38,48 @@ func (c *Collection) Gets(ctx context.Context, out interface{}, filter interface
 }
 
 // Insert document
-func (c *Collection) Insert(ctx context.Context, document interface{}) error {
+func (c *Collection) Insert(ctx context.Context, document interface{}, opts ...*options.InsertOneOptions) error {
 	coll, _ := c.Collection.Clone()
-	_, err := coll.InsertOne(ctx, document)
+	_, err := coll.InsertOne(ctx, document, opts...)
+	return err
+}
+
+// InsertMany document
+func (c *Collection) InsertMany(ctx context.Context, document []interface{}, opts ...*options.InsertManyOptions) error {
+	coll, _ := c.Collection.Clone()
+	_, err := coll.InsertMany(ctx, document, opts...)
 	return err
 }
 
 // Update one
-func (c *Collection) Update(ctx context.Context, filter interface{}, update interface{}) error {
+func (c *Collection) Update(ctx context.Context, filter interface{}, update interface{}, opts ...*options.UpdateOptions) error {
 	coll, _ := c.Collection.Clone()
-	_, err := coll.UpdateOne(ctx, filter, update)
+	_, err := coll.UpdateOne(ctx, filter, update, opts...)
 	return err
 }
 
-func (c *Collection) InsertOrUpdate(ctx context.Context, filter interface{}, update interface{}) {
+func (c *Collection) InsertOrUpdate(ctx context.Context, filter interface{}, update interface{}, opts ...*options.FindOneAndUpdateOptions) {
 	coll, _ := c.Collection.Clone()
-	coll.FindOneAndUpdate(ctx, filter, update, options.FindOneAndUpdate().SetUpsert(true))
+	opts = append(opts, options.FindOneAndUpdate().SetUpsert(true))
+	coll.FindOneAndUpdate(ctx, filter, update, opts...)
 }
 
-func (c *Collection) InsertOrUpdate2(ctx context.Context, out interface{}, filter interface{}, update interface{}) (interface{}, error) {
+func (c *Collection) InsertOrUpdate2(ctx context.Context, out interface{}, filter interface{}, update interface{}, opts ...*options.FindOneAndUpdateOptions) (interface{}, error) {
 	coll, _ := c.Collection.Clone()
-	err := coll.FindOneAndUpdate(ctx, filter, update, options.FindOneAndUpdate().SetUpsert(true)).Decode(out)
+	opts = append(opts, options.FindOneAndUpdate().SetUpsert(true))
+	err := coll.FindOneAndUpdate(ctx, filter, update, opts...).Decode(out)
+	if err == mongo.ErrNoDocuments {
+		return nil, nil
+	}
+
 	if err != nil {
 		return nil, err
 	}
+
 	return out, nil
 }
 
-func (c *Collection) Count(ctx context.Context, filter interface{}) (int64, error) {
+func (c *Collection) Count(ctx context.Context, filter interface{}, opts ...*options.CountOptions) (int64, error) {
 	coll, _ := c.Collection.Clone()
-	return coll.CountDocuments(ctx, filter)
+	return coll.CountDocuments(ctx, filter, opts...)
 }

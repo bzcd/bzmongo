@@ -3,13 +3,20 @@ package bzmongo
 import (
 	"context"
 	"errors"
+	"sync"
+	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type MapStringOptions map[string]*Options
 
-var mgr = map[string]*Mongo{}
+type tMgr struct {
+	once sync.Once
+	m    *Mongo
+}
+
+var mgr = map[string]*tMgr{}
 
 func Init(mo MapStringOptions) (err error) {
 	for key, opt := range mo {
@@ -19,10 +26,10 @@ func Init(mo MapStringOptions) (err error) {
 			continue
 		}
 
-		mgr[key] = cli
+		mgr[key] = &tMgr{m: cli}
 	}
 
-	return nil
+	return
 }
 
 func InitAndConnect(ctx context.Context, mo MapStringOptions) error {
@@ -32,7 +39,10 @@ func InitAndConnect(ctx context.Context, mo MapStringOptions) error {
 			return err
 		}
 
-		mgr[key] = cli
+		v := &tMgr{m: cli}
+		v.once.Do(func() {})
+
+		mgr[key] = v
 	}
 
 	return nil
@@ -44,7 +54,15 @@ func GetMongo(name string) (*Mongo, error) {
 		return nil, errors.New("No mongo named: " + name)
 	}
 
-	return m, nil
+	var err error
+
+	m.once.Do(func() {
+		ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+		defer cancel()
+		err = m.m.Connect(ctx)
+	})
+
+	return m.m, err
 }
 
 func GetDatabase(name, db string) *mongo.Database {
